@@ -7,18 +7,22 @@ const pool = new Pool({
   database: 'bootcampx'
 });
 
-let userInput = process.argv.slice(2);
+let userInput = process.argv[2];
+let maliciousValues = [`${userInput}`]
 
-pool.query(`SELECT DISTINCT teachers.name AS teacher,
+let query = `SELECT DISTINCT teachers.name AS teacher,
 cohorts.name AS cohort
 FROM assistance_requests
   JOIN teachers ON teachers.id = assistance_requests.teacher_id
   JOIN students ON students.id = assistance_requests.student_id
   JOIN cohorts ON cohorts.id = students.cohort_id
-WHERE cohorts.name = '${userInput[0]}'
-ORDER BY teachers.name`)
+WHERE cohorts.name = $1
+ORDER BY teachers.name`;
+
+pool.query(query, maliciousValues)
 .then(res => {
   res.rows.forEach(row => {
     console.log(`${row.cohort}: ${row.teacher}`);
   })
-});
+})
+.catch(err => console.error('query error', err.stack));
